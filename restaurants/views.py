@@ -1,19 +1,37 @@
 from django.shortcuts import render, redirect
-from .models import Restaurant, Item
+from .models import Restaurant, Item ,FavoriteRestaurant
 from .forms import RestaurantForm, ItemForm, SignupForm, SigninForm
 from django.contrib.auth import login, authenticate, logout
 from django.db.models import Q
+from django.http import JsonResponse
 
 # This view will be used to favorite a restaurant
 def restaurant_favorite(request, restaurant_id):
+    restaurant = Restaurant.objects.get(id = restaurant_id)
+    like , created = FavoriteRestaurant.objects.get_or_create(user=request.user, restaurant = restaurant)
     
-    return
+    if created:
+        action = 'like'
+    else:
+        action = 'unlike'
+        like.delete()   
+    response = {
+    'action': action
+    }     
+    
+    return JsonResponse(response)
 
 
 # This view will be used to display only restaurants a user has favorited
 def favorite_restaurants(request):
-    
-    return
+
+    if request.user.is_anonymous:
+        return redirect('signin')
+    fav_restaurants = FavoriteRestaurant.objects.filter(user = request.user)
+    context = {
+       'restaurants': fav_restaurants 
+       }
+    return render(request,'fav.html',context)
 
 
 def no_access(request):
@@ -60,6 +78,8 @@ def signout(request):
 
 def restaurant_list(request):
     restaurants = Restaurant.objects.all()
+    if request.user.is_anonymous:
+        return redirect('signin')
     query = request.GET.get('q')
     if query:
         # Not Bonus. Querying through a single field.
@@ -72,8 +92,14 @@ def restaurant_list(request):
             Q(owner__username__icontains=query)
         ).distinct()
         #############
+
+    liked_by= FavoriteRestaurant.objects.filter(user=request.user)
+    liked_resturent = []
+    for like in liked_by:
+        liked_resturent.append(like.restaurant)
     context = {
-       "restaurants": restaurants
+       "restaurants": restaurants,
+       'liked_resturent': liked_resturent,
     }
     return render(request, 'list.html', context)
 

@@ -28,9 +28,39 @@
                 <a href="{% url 'restaurant-detail' restaurant.id %}" class="btn btn-outline-dark">View</a>
             </li>
           </ul>
+          <button class = 'btn btn-light  col-2 ' onClick = 'like({{restaurant.id}})'><i class="fas fa-heart {% if restaurant in liked_resturent %} text-danger {% endif %}" id ='like-{{restaurant.id}}'></i></button>
         </div>
     </div>
     {% endfor %}
 </div>
+
+<script type="text/javascript">
+  function like(id){
+    var like = '#like-' + id
+    $.ajax({
+      type: 'GET',
+      url: '/restaurants/' + id + '/favorite/',
+      error: function(){
+        alert('Something went Wrong')
+
+      },
+      success: function(data){
+        if (data.action === 'like'){
+          $(like).addClass('text-danger')
+          
+
+
+
+        }else{
+          $(like).removeClass('text-danger')
+          
+
+
+        }
+
+      }
+    })
+  }
+</script>
 {% endblock content %}
 
